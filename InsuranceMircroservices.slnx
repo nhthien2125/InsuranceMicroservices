@@ -6,6 +6,9 @@
   <Project Path="AuthService.Api/AuthService.Api.csproj" />
   <Project Path="AuthService.Test/AuthService.Test.csproj" />
   <Project Path="AuthService/AuthService.csproj" />
+  <Project Path="C:/Users/thien/Downloads/PricingService.Api/PricingService.Api.csproj" />
+  <Project Path="C:/Users/thien/Downloads/PricingService.IntegrationTest/PricingService.IntegrationTest.csproj" />
+  <Project Path="C:/Users/thien/Downloads/PricingService.Test/PricingService.Test.csproj" />
   <Project Path="ChatService.Api/ChatService.Api.csproj" />
   <Project Path="ChatService.Test/ChatService.Test.csproj" />
   <Project Path="ChatService/ChatService.csproj" />
@@ -23,9 +26,7 @@
   <Project Path="PolicyService.Api/PolicyService.Api.csproj" />
   <Project Path="PolicyService.Test/PolicyService.Test.csproj" />
   <Project Path="PolicyService/PolicyService.csproj" />
-  <Project Path="PricingService.Api/PricingService.Api.csproj" />
-  <Project Path="PricingService.Test/PricingService.Test.csproj" />
-  <Project Path="PricingService/PricingService.csproj" />
+  <Project Path="PricingService/PricingService.csproj" Id="687e2583-f089-4f8f-bbfa-37c1d05d6ff4" />
   <Project Path="ProductService.Api/ProductService.Api.csproj" Id="d447100d-6aa9-4051-870c-9b4d95c1b4ac" />
   <Project Path="ProductService.Test/ProductService.Test.csproj" />
   <Project Path="ProductService/ProductService.csproj" />
