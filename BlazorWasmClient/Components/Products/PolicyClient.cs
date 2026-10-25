@@ -1,12 +1,5 @@
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Text;
 using BlazorWasmClient.Components.Auth;
 using BlazorWasmClient.Shared;
-using Microsoft.AspNetCore.Components.Authorization;
-using Newtonsoft.Json;
-using PolicyService.Api.Commands;
-using PolicyService.Api.Queries;
 
 namespace BlazorWasmClient.Components.Products;
 
@@ -18,7 +11,7 @@ public class PolicyClient
 
     public PolicyClient
     (
-        AuthenticationStateProvider customAuthenticationStateProvider, 
+        AuthenticationStateProvider customAuthenticationStateProvider,
         HttpClient httpClient,
         IConfiguration configuration
     )
@@ -32,10 +25,10 @@ public class PolicyClient
     {
         var token = await customAuthenticationStateProvider.GetToken();
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        
+
         var calculationResult = await httpClient.PostAsync
         (
-            $"{baseUrl}/api/offers", 
+            $"{baseUrl}/api/offers",
             new StringContent(JsonConvert.SerializeObject(createOfferCommand), Encoding.UTF8, "application/json")
         );
 
@@ -49,15 +42,15 @@ public class PolicyClient
             return ApiResponse<CreateOfferResult>.Error("Failed to calculate price.");
         }
     }
-    
+
     public async Task<ApiResponse<CreatePolicyResult>> CreatePolicy(CreatePolicyCommand createPolicyCommand)
     {
         var token = await customAuthenticationStateProvider.GetToken();
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        
+
         var calculationResult = await httpClient.PostAsync
         (
-            $"{baseUrl}/api/policies", 
+            $"{baseUrl}/api/policies",
             new StringContent(JsonConvert.SerializeObject(createPolicyCommand), Encoding.UTF8, "application/json")
         );
 

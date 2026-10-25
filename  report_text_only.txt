@@ -1,0 +1,1249 @@
+﻿=== 1. KET QUA DOTNET BUILD ===
+C:\Program Files\dotnet\sdk\10.0.402\NuGet.targets(521,5): error MSB3202: The project file "D:\Study\VStudio\InsuranceMircroservices\PricingService.Test\PricingService.csproj" was not found. [D:\Study\VStudio\InsuranceMircroservices\InsuranceMircroservices.slnx]
+
+Build FAILED.
+
+C:\Program Files\dotnet\sdk\10.0.402\NuGet.targets(521,5): error MSB3202: The project file "D:\Study\VStudio\InsuranceMircroservices\PricingService.Test\PricingService.csproj" was not found. [D:\Study\VStudio\InsuranceMircroservices\InsuranceMircroservices.slnx]
+    0 Warning(s)
+    1 Error(s)
+
+Time Elapsed 00:00:01.26
+
+=== 2. NOI DUNG CODE VA CAU HINH ===
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\AgentPortalApiGateway\AgentPortalApiGateway.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <UserSecretsId>4761b4d0-7f3f-4a3a-b774-89de95b85112</UserSecretsId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.8" />
+        <PackageReference Include="Ocelot" Version="23.3.4" />
+        <PackageReference Include="Ocelot.Cache.CacheManager" Version="23.3.4" />
+        <PackageReference Include="Ocelot.Provider.Eureka" Version="23.3.4" />
+        <PackageReference Include="Steeltoe.Discovery.Eureka" Version="3.2.8" />
+    </ItemGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\AgentPortalApiGateway\appsettings.json
+==========================================
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "spring": {
+    "application": {
+      "name": "Agent-Portal-Api-Gateway"
+    }
+  },
+  "eureka": {
+    "client": {
+      "serviceUrl": "http://localhost:8761/eureka/",
+      "shouldRegisterWithEureka": false,
+      "validateCertificates": false
+    }
+  }
+}
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\AgentPortalApiGateway\ocelot.json
+==========================================
+{
+  "Routes": [
+    {
+      "DownstreamPathTemplate": "/api/Products/{everything}",
+      "DownstreamScheme": "http",
+      "UpstreamPathTemplate": "/Products/{everything}",
+      "ServiceName": "ProductService",
+      "UpstreamHttpMethod": [ "Get" ]
+    }
+  ],
+  "GlobalConfiguration": {
+    "RequestIdKey": "OcRequestId",
+    "AdministrationPath": "/administration",
+    "UseServiceDiscovery": true,
+    "ServiceDiscoveryProvider": {
+      "Type": "Eureka",
+      "Host": "localhost",
+      "Port": 8761
+    }
+  }
+}
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\AgentPortalApiGateway\Program.cs
+==========================================
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Ocelot.Cache.CacheManager;
+using Ocelot.DependencyInjection;
+using Ocelot.Middleware;
+using Ocelot.Provider.Eureka;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// 1. Cố định cổng chạy là http://localhost:8099 (hoặc truyền thẳng vào app.Run bên dưới)
+builder.WebHost.UseUrls("http://localhost:8099");
+
+// 2. Nạp thêm ocelot.json (WebApplication.CreateBuilder đã tự nạp sẵn appsettings.json và BasePath)
+builder.Configuration.AddJsonFile("ocelot.json", optional: false, reloadOnChange: false);
+
+// 3. Đăng ký dịch vụ Ocelot + Eureka + CacheManager
+builder.Services
+    .AddOcelot(builder.Configuration)
+    .AddEureka()
+    .AddCacheManager(x => x.WithDictionaryHandle());
+
+var app = builder.Build();
+
+// 4. Sử dụng Middleware Ocelot
+await app.UseOcelot();
+
+app.Run();
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\AuthService\appsettings.json
+==========================================
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "AppSettings": {
+    "Secret": "THIS_IS_A_RANDOM_SECRET_2e7a1e80-16ee-4e52-b5c6-5e8892453459",
+    "AllowedAuthOrigins": [
+      "http://localhost:8080",
+      "http://localhost",
+      "http://localhost:5081"
+    ]
+  }
+}
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\AuthService\AuthService.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.6" />
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.6" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    </ItemGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\AuthService\Program.cs
+==========================================
+using System.IO;
+using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+
+namespace AuthService;
+
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        CreateWebHostBuilder(args).Build().Run();
+    }
+
+    public static IWebHostBuilder CreateWebHostBuilder(string[] args)
+    {
+        var config = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("hosting.json", true)
+            .AddJsonFile("appsettings.json", true)
+            .AddCommandLine(args)
+            .Build();
+
+        return WebHost.CreateDefaultBuilder(args)
+            .UseConfiguration(config)
+            .UseStartup<Startup>();
+    }
+}
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\AuthService\Startup.cs
+==========================================
+using System.Text;
+using AuthService.DataAccess;
+using AuthService.Domain;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
+
+namespace AuthService;
+
+public class Startup
+{
+    public Startup(IConfiguration configuration)
+    {
+        Configuration = configuration;
+    }
+
+    public IConfiguration Configuration { get; }
+
+    // This method gets called by the runtime. Use this method to add services to the container.
+    public void ConfigureServices(IServiceCollection services)
+    {
+        var appSettingsSection = Configuration.GetSection("AppSettings");
+        services.Configure<AppSettings>(appSettingsSection);
+        var appSettings = appSettingsSection.Get<AppSettings>();
+        var key = Encoding.ASCII.GetBytes(appSettings.Secret);
+
+        services.AddCors(opt => opt.AddPolicy("CorsPolicy",
+            builder =>
+            {
+                builder
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials()
+                    .WithOrigins(appSettingsSection.Get<AppSettings>().AllowedAuthOrigins);
+            }));
+
+        services.AddMvc()
+            .AddNewtonsoftJson();
+        services.AddAuthentication(x =>
+            {
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(x =>
+            {
+                x.RequireHttpsMetadata = false;
+                x.SaveToken = true;
+                x.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false
+                };
+            });
+
+        services.AddSingleton<Domain.AuthService>();
+        services.AddSingleton<IInsuranceAgents, InsuranceAgentsInMemoryDb>();
+        services.AddSwaggerGen();
+    }
+
+    // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        app.UseRouting();
+        if (env.IsDevelopment())
+            app.UseDeveloperExceptionPage();
+        else
+            app.UseHsts();
+
+        if (env.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
+
+        app.UseCors("CorsPolicy");
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.UseHttpsRedirection();
+        app.UseEndpoints(endpoints => endpoints.MapControllers());
+    }
+}
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\AuthService.Api\AuthService.Api.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="MediatR" Version="14.2.0" />
+	</ItemGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\AuthService.Test\AuthService.Test.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\BlazorWasmClient\wwwroot\appsettings.json
+==========================================
+{
+  "Services" : {
+    "Auth" : "http://localhost:6060",
+    "ApiGateway": "http://localhost:8099",
+    "Chat": "http://localhost:4099"
+  }
+}
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\BlazorWasmClient\BlazorWasmClient.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>disable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Version>1.3</Version>
+		<Authors>Megabit</Authors>
+		<Company>Megabit</Company>
+		<Description>
+			This is a Blazorise Template for a Blazor Server Application.
+			Blazorise is a component library built on top of Blazor and CSS frameworks like Bootstrap, Tailwind, Bulma and Material.
+		</Description>
+		<Copyright>Copyright 2018-2023 Megabit</Copyright>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Blazored.SessionStorage" Version="2.4.0" />
+		<PackageReference Include="Blazorise.Charts" Version="1.5.3" />
+		<PackageReference Include="Blazorise.Components" Version="1.5.3" />
+		<PackageReference Include="Microsoft.AspNetCore.Authorization" Version="8.0.6" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="8.0.6" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.6" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="8.0.6" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.6" PrivateAssets="all" />
+		<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.6" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Blazorise" Version="1.5.3" />
+		<PackageReference Include="Blazorise.Bootstrap5" Version="1.5.3" />
+		<PackageReference Include="Blazorise.Icons.FontAwesome" Version="1.5.3" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <AdditionalFiles Include="Components\Auth\Login.razor" />
+	  <AdditionalFiles Include="Components\Dashboard\Dashboard.razor" />
+	  <AdditionalFiles Include="Components\Dashboard\ProductsSalesCard.razor" />
+	  <AdditionalFiles Include="Components\Dashboard\SalesAgentsCard.razor" />
+	  <AdditionalFiles Include="Components\Dashboard\TotalSalesCard.razor" />
+	  <AdditionalFiles Include="Components\Dashboard\TrandsCard.razor" />
+	  <AdditionalFiles Include="Components\PolicySearch\PolicySearch.razor" />
+	  <AdditionalFiles Include="Components\Products\ContractDetailsSection.razor" />
+	  <AdditionalFiles Include="Components\Products\OfferParamsSection.razor" />
+	  <AdditionalFiles Include="Components\Products\PolicySummarySection.razor" />
+	  <AdditionalFiles Include="Components\Products\ProductCard.razor" />
+	  <AdditionalFiles Include="Components\Products\ProductDetails.razor" />
+	  <AdditionalFiles Include="Components\Products\ProductsList.razor" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\DashboardService.Api\DashboardService.Api.csproj" />
+	  <ProjectReference Include="..\PolicySearchService.Api\PolicySearchService.Api.csproj" />
+	  <ProjectReference Include="..\PolicyService.Api\PolicyService.Api.csproj" />
+	  <ProjectReference Include="..\PricingService.Api\PricingService.Api.csproj" />
+	  <ProjectReference Include="..\ProductService.Api\ProductService.Api.csproj" />
+	</ItemGroup>
+
+
+	<ItemGroup>
+	  <_ContentIncludedByDefault Remove="Components\TodoApp\TodoItem.razor" />
+	  <_ContentIncludedByDefault Remove="Components\TodoApp\TodoItems.razor" />
+	</ItemGroup>
+
+
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\BlazorWasmClient\Program.cs
+==========================================
+using BlazorWasmClient.Components.Auth;
+using BlazorWasmClient.Components.Dashboard;
+using BlazorWasmClient.Components.PolicySearch;
+using BlazorWasmClient.Components.Products;
+
+namespace BlazorWasmClient
+{
+    public class Program
+    {
+        public static async Task Main(string[] args)
+        {
+            var builder = WebAssemblyHostBuilder.CreateDefault(args);
+            builder.RootComponents.Add<App>("#app");
+
+            AddBlazorise(builder.Services);
+
+            builder.Services.AddAuthorizationCore();
+
+            builder.Services.AddBlazoredSessionStorage();
+            builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
+            builder.Services.AddHttpClient();
+
+            builder.Services.AddScoped<PolicySearchClient>();
+            builder.Services.AddScoped<ProductsClient>();
+            builder.Services.AddScoped<PolicyClient>();
+            builder.Services.AddScoped<AuthClient>();
+            builder.Services.AddScoped<DashboardClient>();
+
+            await builder.Build().RunAsync();
+        }
+
+        public static void AddBlazorise(IServiceCollection services)
+        {
+            services
+                .AddBlazorise();
+            services
+                .AddBootstrap5Providers()
+                .AddFontAwesomeIcons();
+        }
+    }
+}
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\ChatService\appsettings.json
+==========================================
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Warning"
+    }
+  },
+  "Spring": {
+    "Application": {
+      "Name": "ChatService"
+    }
+  },
+  "Eureka": {
+    "Instance": {
+      "Port": 4099,
+      "HostName": "localhost"
+    }
+  },
+  "AppSettings": {
+    "Secret": "THIS_IS_A_RANDOM_SECRET_2e7a1e80-16ee-4e52-b5c6-5e8892453459",
+    "AllowedChatOrigins": [
+      "http://localhost:8080",
+      "http://host.docker.internal:8080",
+      "http://localhost:5081"
+    ]
+  }
+}
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\ChatService\ChatService.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.6" />
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6" />
+        <PackageReference Include="MediatR" Version="14.2.0" />
+        <PackageReference Include="EasyNetQ" Version="7.8.0" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.6" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ChatService.Api\ChatService.Api.csproj" />
+        <ProjectReference Include="..\PolicyService.Api\PolicyService.Api.csproj" />
+    </ItemGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\ChatService\Program.cs
+==========================================
+using System.IO;
+using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+
+namespace ChatService;
+
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        CreateWebHostBuilder(args).Build().Run();
+    }
+
+    private static IWebHostBuilder CreateWebHostBuilder(string[] args)
+    {
+        var config = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("hosting.json", true)
+            .AddJsonFile("appsettings.json", true)
+            .AddCommandLine(args)
+            .Build();
+
+        return WebHost.CreateDefaultBuilder(args)
+            .UseConfiguration(config)
+            .UseStartup<Startup>();
+    }
+}
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\ChatService\Startup.cs
+==========================================
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading.Tasks;
+using ChatService.Hubs;
+using ChatService.Messaging.RabbitMq;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
+
+namespace ChatService;
+
+public class Startup
+{
+    public Startup(IConfiguration configuration)
+    {
+        Configuration = configuration;
+    }
+
+    public IConfiguration Configuration { get; }
+
+    // This method gets called by the runtime. Use this method to add services to the container.
+    public void ConfigureServices(IServiceCollection services)
+    {
+        var appSettingsSection = Configuration.GetSection("AppSettings");
+        services.Configure<AppSettings>(appSettingsSection);
+
+        services.AddMediatR(opts => opts.RegisterServicesFromAssemblyContaining<Startup>());
+
+        services.AddCors(opt => opt.AddPolicy("CorsPolicy",
+            builder =>
+            {
+                builder
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials()
+                    .WithOrigins(appSettingsSection.Get<AppSettings>().AllowedChatOrigins);
+            }));
+
+        services.AddMvc()
+            .AddNewtonsoftJson();
+
+        var appSettings = appSettingsSection.Get<AppSettings>();
+        var key = Encoding.ASCII.GetBytes(appSettings.Secret);
+        services.AddAuthentication(x =>
+            {
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(x =>
+            {
+                x.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateActor = false
+                };
+                x.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            path.StartsWithSegments("/agentsChat"))
+                            context.Token = accessToken;
+                        return Task.CompletedTask;
+                    }
+                };
+            });
+
+        services.AddAuthorization(_ => { });
+
+        services.AddSignalR();
+
+        services.AddSingleton<IUserIdProvider, NameUserIdProvider>();
+
+        services.AddRabbitListeners();
+
+        services.AddSwaggerGen();
+    }
+
+    // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        app.UseRouting();
+        if (env.IsDevelopment())
+            app.UseDeveloperExceptionPage();
+        else
+            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+            app.UseHsts();
+
+        if (env.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
+
+        app.UseCors("CorsPolicy");
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.UseHttpsRedirection();
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers();
+            endpoints.MapHub<AgentChatHub>("/agentsChat");
+        });
+
+        app.UseRabbitListeners(new List<Type> { typeof(PolicyCreated) });
+    }
+}
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\ChatService.Api\ChatService.Api.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.6" />
+        <PackageReference Include="MediatR" Version="12.3.0" />
+    </ItemGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\ChatService.Test\ChatService.Test.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\DashboardService\appsettings.json
+==========================================
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  },
+  "AllowedHosts": "*",
+  "RabbitMqOptions": {
+    "Host": "localhost",
+    "Port": 5672
+  },
+  "ConnectionStrings": {
+    "ElasticSearchConnection": "http://localhost:9200"
+  },
+  "Spring": {
+    "Application": {
+      "Name": "DashboardService"
+    }
+  },
+  "Eureka": {
+    "Client": {
+    },
+    "Instance": {
+      "Port": 5035,
+      "HostName": "localhost"
+    }
+  }
+}
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\DashboardService\DashboardService.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MediatR" Version="14.2.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.6" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="Steeltoe.Discovery.ClientBase" Version="3.2.7" />
+        <PackageReference Include="Steeltoe.Discovery.Eureka" Version="3.2.7" />
+        <PackageReference Include="EasyNetQ" Version="7.8.0" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.6" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+        <PackageReference Include="Elastic.Clients.Elasticsearch" Version="8.9.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\DashboardService.Api\DashboardService.Api.csproj" />
+        <ProjectReference Include="..\PolicyService.Api\PolicyService.Api.csproj" />
+    </ItemGroup>
+
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\DashboardService\Program.cs
+==========================================
+using System.IO;
+using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+
+namespace DashboardService;
+
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        CreateWebHostBuilder(args)
+            .Build()
+            .Run();
+    }
+
+    public static IWebHostBuilder CreateWebHostBuilder(string[] args)
+    {
+        var config = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("hosting.json", true)
+            .AddJsonFile("appsettings.json", true)
+            .AddCommandLine(args)
+            .Build();
+
+        return WebHost.CreateDefaultBuilder(args)
+            .UseConfiguration(config)
+            .UseStartup<Startup>();
+    }
+}
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\DashboardService\Startup.cs
+==========================================
+using System;
+using System.Collections.Generic;
+using DashboardService.DataAccess.Elastic;
+using DashboardService.Domain;
+using DashboardService.Init;
+using DashboardService.Messaging.RabbitMq;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Steeltoe.Discovery.Client;
+
+namespace DashboardService;
+
+public class Startup
+{
+    public Startup(IConfiguration configuration)
+    {
+        Configuration = configuration;
+    }
+
+    public IConfiguration Configuration { get; }
+
+    // This method gets called by the runtime. Use this method to add services to the container.
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddDiscoveryClient(Configuration);
+        services.AddMvc()
+            .AddNewtonsoftJson();
+        services.AddMediatR(opts => opts.RegisterServicesFromAssemblyContaining<Startup>());
+        services.AddElasticSearch(Configuration.GetConnectionString("ElasticSearchConnection"));
+        services.AddSingleton<IPolicyRepository, ElasticPolicyRepository>();
+        services.AddRabbitListeners(Configuration.GetSection("RabbitMqOptions").Get<RabbitMqOptions>());
+        services.AddInitialSalesData();
+        services.AddSwaggerGen();
+    }
+
+    // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        if (env.IsDevelopment()) app.UseDeveloperExceptionPage();
+
+        if (env.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
+
+        app.UseHttpsRedirection();
+
+        app.UseRouting();
+
+        app.UseAuthorization();
+
+        app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+
+        app.UseRabbitListeners(new List<Type> { typeof(PolicyCreated) });
+    }
+}
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\DashboardService.Api\DashboardService.Api.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MediatR" Version="12.3.0" />
+    </ItemGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\DashboardService.Test\DashboardService.Test.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Elastic.Clients.Elasticsearch" Version="8.9.3" />
+        <PackageReference Include="FluentAssertions" Version="6.12.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+        <PackageReference Include="Testcontainers.Elasticsearch" Version="3.9.0" />
+        <PackageReference Include="xunit" Version="2.8.1" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.8.1">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="coverlet.collector" Version="6.0.2">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\DashboardService.Api\DashboardService.Api.csproj" />
+        <ProjectReference Include="..\DashboardService\DashboardService.csproj" />
+    </ItemGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\DocumentService\DocumentService.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="14.2.0" />
+  </ItemGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\DocumentService.Api\DocumentService.Api.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="14.2.0" />
+  </ItemGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\DocumentService.Test\DocumentService.Test.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\PaymentService\PaymentService.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="14.2.0" />
+  </ItemGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\PaymentService.Api\PaymentService.Api.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="14.2.0" />
+  </ItemGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\PaymentService.Test\PaymentService.Test.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\PolicySearchService\PolicySearchService.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="14.2.0" />
+  </ItemGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\PolicySearchService.Api\PolicySearchService.Api.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="14.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Queries\Dtos\" />
+  </ItemGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\PolicySearchService.Test\PolicySearchService.Test.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\PolicyService\PolicyService.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="14.2.0" />
+  </ItemGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\PolicyService.Api\PolicyService.Api.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="14.2.0" />
+  </ItemGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\PolicyService.Test\PolicyService.Test.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\PricingService.Api\PricingService.Api.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="FluentValidation" Version="11.9.2" />
+        <PackageReference Include="MediatR" Version="12.3.0" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+    </ItemGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\PricingService.IntegrationTest\PricingService.IntegrationTest.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Alba" Version="7.4.1" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.6" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+        <PackageReference Include="Testcontainers" Version="3.9.0" />
+        <PackageReference Include="Testcontainers.PostgreSql" Version="3.9.0" />
+        <PackageReference Include="xunit" Version="2.8.1" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.8.1">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+
+    <ItemGroup>
+        <ProjectReference Include="..\PricingService\PricingService.csproj" />
+    </ItemGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\PricingService.Test\PricingService.Test.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.6" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+        <PackageReference Include="Moq" Version="4.20.70" />
+        <PackageReference Include="xunit" Version="2.8.1" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.8.1">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\PricingService\PricingService.csproj" />
+    </ItemGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\ProductService\ProductService.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="14.2.0" />
+  </ItemGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\ProductService.Api\appsettings.json
+==========================================
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\ProductService.Api\ProductService.Api.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+</Project>
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\ProductService.Api\Program.cs
+==========================================
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+
+builder.Services.AddControllers();
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();
+
+==========================================
+FILE: D:\Study\VStudio\InsuranceMircroservices\ProductService.Test\ProductService.Test.csproj
+==========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

@@ -1,6 +1,3 @@
-using PolicyService.Api.Commands.Dtos;
-using ProductService.Api.Queries.Dtos;
-
 namespace BlazorWasmClient.Components.Products;
 
 public class OfferParametersModel
@@ -39,14 +36,14 @@ public class OfferParametersModel
             }
         }
     }
-    
+
     public Task SetChoiceAnswer(string answerQuestionCode, string value)
     {
         var answer = QuestionAnswers.First(q => q.Answer.QuestionCode == answerQuestionCode);
         (answer.Answer as ChoiceQuestionAnswer).Answer = value;
         return Task.CompletedTask;
     }
-    
+
     public Task SetNumericAnswer(string answerQuestionCode, decimal? value)
     {
         var answer = QuestionAnswers.First(q => q.Answer.QuestionCode == answerQuestionCode);
@@ -60,5 +57,5 @@ public class QuestionAnswerModel
     public string Question { get; set; }
     public IList<ChoiceDto> Choices { get; set; }
     public QuestionAnswer Answer { get; set; }
-    
+
 }

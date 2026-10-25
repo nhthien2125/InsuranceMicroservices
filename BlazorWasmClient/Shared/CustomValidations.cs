@@ -18,7 +18,7 @@ public static class CustomValidations
 
         e.Status = ValidationStatus.Success;
     }
-    
+
     public static void NotEmptyDecimal(ValidatorEventArgs e)
     {
         if (e.Value == null)

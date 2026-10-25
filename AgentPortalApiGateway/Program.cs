@@ -1,79 +1,28 @@
-﻿using System.Text;
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
 using Ocelot.Cache.CacheManager;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
 using Ocelot.Provider.Eureka;
 
-namespace AgentPortalApiGateway;
+var builder = WebApplication.CreateBuilder(args);
 
-public class Program
-{
-    public static void Main(string[] args)
-    {
-        BuildWebHost(args).Run();
-    }
+// 1. Cố định cổng chạy là http://localhost:8099 (hoặc truyền thẳng vào app.Run bên dưới)
+builder.WebHost.UseUrls("http://localhost:8099");
 
-    public static IWebHost BuildWebHost(string[] args)
-    {
-        var key = Encoding.ASCII.GetBytes("THIS_IS_A_RANDOM_SECRET_2e7a1e80-16ee-4e52-b5c6-5e8892453459");
+// 2. Nạp thêm ocelot.json (WebApplication.CreateBuilder đã tự nạp sẵn appsettings.json và BasePath)
+builder.Configuration.AddJsonFile("ocelot.json", optional: false, reloadOnChange: false);
 
-        return WebHost.CreateDefaultBuilder(args)
-            .ConfigureAppConfiguration((hostingContext, config) =>
-            {
-                config
-                    .SetBasePath(hostingContext.HostingEnvironment.ContentRootPath)
-                    .AddJsonFile("appsettings.json", true, true)
-                    .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", true,
-                        true)
-                    .AddJsonFile("ocelot.json", false, false)
-                    .AddJsonFile($"ocelot.{hostingContext.HostingEnvironment.EnvironmentName}.json", true, true)
-                    .AddEnvironmentVariables();
-            })
-            .ConfigureServices(s =>
-            {
-                s.AddCors();
-                s.AddAuthentication(x =>
-                    {
-                        x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                        x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                    })
-                    .AddJwtBearer("ApiSecurity", x =>
-                    {
-                        x.RequireHttpsMetadata = false;
-                        x.SaveToken = true;
-                        x.TokenValidationParameters = new TokenValidationParameters
-                        {
-                            ValidateIssuerSigningKey = true,
-                            IssuerSigningKey = new SymmetricSecurityKey(key),
-                            ValidateIssuer = false,
-                            ValidateAudience = false
-                        };
-                    });
-                s.AddOcelot().AddEureka().AddCacheManager(x => x.WithDictionaryHandle());
-            })
-            .Configure(a =>
-            {
-                var appSettings = new AppSettings();
-                a.ApplicationServices.GetService<IConfiguration>()
-                    .GetSection("AppSettings")
-                    .Bind(appSettings);
+// 3. Đăng ký dịch vụ Ocelot + Eureka + CacheManager
+builder.Services
+    .AddOcelot(builder.Configuration)
+    .AddEureka()
+    .AddCacheManager(x => x.WithDictionaryHandle());
 
-                a.UseCors
-                (b => b
-                    .WithOrigins(appSettings.AllowedChatOrigins)
-                    .AllowAnyMethod()
-                    .AllowAnyHeader()
-                    .AllowCredentials()
-                );
-                a.UseOcelot().Wait();
-            })
-            .Build();
-    }
-}
+var app = builder.Build();
+
+// 4. Sử dụng Middleware Ocelot
+await app.UseOcelot();
+
+app.Run();

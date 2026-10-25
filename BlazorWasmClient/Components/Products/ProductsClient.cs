@@ -1,9 +1,5 @@
-using System.Net.Http.Headers;
 using BlazorWasmClient.Components.Auth;
 using BlazorWasmClient.Shared;
-using Microsoft.AspNetCore.Components.Authorization;
-using Newtonsoft.Json;
-using ProductService.Api.Queries.Dtos;
 
 namespace BlazorWasmClient.Components.Products;
 
@@ -15,7 +11,7 @@ public class ProductsClient
 
     public ProductsClient
     (
-        AuthenticationStateProvider customAuthenticationStateProvider, 
+        AuthenticationStateProvider customAuthenticationStateProvider,
         HttpClient httpClient,
         IConfiguration configuration
     )
@@ -29,7 +25,7 @@ public class ProductsClient
     {
         var token = await customAuthenticationStateProvider.GetToken();
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        
+
         var productsString = await httpClient
             .GetStringAsync($"{baseUrl}/api/Products");
 
@@ -38,12 +34,12 @@ public class ProductsClient
             JsonConvert.DeserializeObject<IEnumerable<ProductDto>>(productsString)
         );
     }
-    
+
     public async Task<ApiResponse<ProductDto>> GetProduct(string code)
     {
         var token = await customAuthenticationStateProvider.GetToken();
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        
+
         var productsString = await httpClient
             .GetStringAsync($"{baseUrl}/api/Products/{code}");
 

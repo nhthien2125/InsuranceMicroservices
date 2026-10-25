@@ -1,9 +1,5 @@
-using System.Net.Http.Headers;
 using BlazorWasmClient.Components.Auth;
 using BlazorWasmClient.Shared;
-using Microsoft.AspNetCore.Components.Authorization;
-using Newtonsoft.Json;
-using PolicySearchService.Api.Queries;
 
 namespace BlazorWasmClient.Components.PolicySearch;
 
@@ -16,7 +12,7 @@ public class PolicySearchClient
 
     public PolicySearchClient
     (
-        AuthenticationStateProvider customAuthenticationStateProvider, 
+        AuthenticationStateProvider customAuthenticationStateProvider,
         HttpClient httpClient,
         IConfiguration configuration
     )
@@ -39,9 +35,9 @@ public class PolicySearchClient
 
         if (!string.IsNullOrWhiteSpace(policyHolder))
         {
-            queryString += ((queryString.Length>0 ? And : string.Empty) + policyHolder);
+            queryString += ((queryString.Length > 0 ? And : string.Empty) + policyHolder);
         }
-        
+
         var productsString = await httpClient
             .GetStringAsync($"{baseUrl}/api/PolicySearch?q={queryString}");
 

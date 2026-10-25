@@ -9,7 +9,7 @@ public static class ProductIcons
         ["apple"] = IconName.Seedling,
         ["car"] = IconName.Car
     };
-    
+
     public static IconName FromProductIcon(string productIcon)
     {
         if (string.IsNullOrWhiteSpace(productIcon) || !ProductIconsMap.ContainsKey(productIcon))
@@ -17,6 +17,6 @@ public static class ProductIcons
 
         return ProductIconsMap[productIcon];
     }
-        
-    
+
+
 }

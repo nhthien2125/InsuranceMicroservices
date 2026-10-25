@@ -13,7 +13,7 @@ public class ApiResponse<T> where T : class
         Result = result,
         ErrorMessage = null
     };
-    
+
     public static ApiResponse<T> Error(string errorMessage) => new ApiResponse<T>
     {
         IsSuccess = false,

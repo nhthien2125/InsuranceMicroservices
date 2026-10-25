@@ -1,12 +1,9 @@
-﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using DashboardService.Api.Queries.Dtos;
 
-namespace DashboardService.Api.Queries
+namespace DashboardService.Api.Queries;
+
+public class GetSalesTrendsResult
 {
-    public class GetSalesTrendsResult
-    {
-    }
+    public List<PeriodSaleDto> PeriodsSales { get; set; }
 }

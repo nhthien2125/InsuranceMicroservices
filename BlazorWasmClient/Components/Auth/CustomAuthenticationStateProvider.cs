@@ -1,14 +1,10 @@
-using System.Security.Claims;
-using Blazored.SessionStorage;
-using Microsoft.AspNetCore.Components.Authorization;
-
 namespace BlazorWasmClient.Components.Auth;
 
 public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 {
     private ISessionStorageService sessionStorageService;
     private ILogger<CustomAuthenticationStateProvider> logger;
-    private ClaimsPrincipal anonymous = new ClaimsPrincipal(new ClaimsIdentity[]{});
+    private ClaimsPrincipal anonymous = new ClaimsPrincipal(new ClaimsIdentity[] { });
 
     public CustomAuthenticationStateProvider(ISessionStorageService sessionStorageService, ILogger<CustomAuthenticationStateProvider> logger)
     {
@@ -29,7 +25,7 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
                 new Claim(ClaimTypes.Name, userSession.UserName),
                 new Claim(ClaimTypes.Role, userSession.Role),
             }, "JwtAuth"));
-            
+
             return await Task.FromResult(new AuthenticationState(claimsPrinciple));
         }
         catch (Exception ex)
@@ -56,7 +52,7 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
         {
             await sessionStorageService.RemoveItemAsync("UserSession");
         }
-        
+
         NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(claimsPrincipal)));
     }
 
@@ -69,8 +65,8 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
         {
             return userSession.Token;
         }
-        
+
         return result;
     }
-    
+
 }
